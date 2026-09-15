@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al Raab Factory - سیستەمێ بەرھەم و فرۆتنێ</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Tahoma, sans-serif; }
+        body { background-color: #f4f7f6; padding: 20px; color: #333; }
+        
+        /* Login Screen Styles */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(44, 62, 80, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; border-radius: 10px; width: 350px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; }
+        .login-box h2 { color: #2c3e50; margin-bottom: 20px; font-size: 20px; }
+        .login-box .form-group { margin-bottom: 15px; text-align: right; }
+        .login-box button { background: #27ae60; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-size: 15px; cursor: pointer; font-weight: bold; }
+        .login-box button:hover { background: #219653; }
+        .login-error { color: #e74c3c; font-size: 13px; margin-top: 10px; display: none; }
+
+        .container { max-width: 950px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .company-header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .company-header div h1 { color: #2c3e50; font-size: 24px; margin-bottom: 5px; text-align: right; }
+        .company-header div p { color: #7f8c8d; font-size: 14px; font-weight: bold; text-align: right; }
+        
+        .header-btns { display: flex; gap: 8px; }
+        .logout-btn { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .logout-btn:hover { background: #c0392b; }
+        .admin-settings-btn { background: #34495e; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .admin-settings-btn:hover { background: #2c3e50; }
+
+        .section-box { background: #fdfefe; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .section-box h3 { margin-bottom: 10px; font-size: 16px; color: #34495e; border-bottom: 2px solid #eee; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 13px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+        
+        button.prod-btn { background: #27ae60; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-size: 15px; cursor: pointer; font-weight: bold; }
+        button.prod-btn:hover { background: #219653; }
+        
+        button.sale-btn { background: #e67e22; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-size: 15px; cursor: pointer; font-weight: bold; }
+        button.sale-btn:hover { background: #d35400; }
+
+        .cat-btn { background: #8e44ad; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .cat-btn:hover { background: #732d91; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 400px; max-width: 90%; }
+        .modal-content h3 { margin-bottom: 15px; color: #2c3e50; }
+        .cat-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        .chart-container { margin: 20px 0; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 20px; }
+        .stat-box { padding: 15px; border-radius: 5px; text-align: center; font-size: 14px; font-weight: bold; color: white; background: #2980b9; }
+        .stat-box span { display: block; font-size: 20px; margin-top: 5px; }
+        .stat-box .sub-items-count { font-size: 12px; font-weight: normal; margin-top: 5px; background: rgba(0,0,0,0.15); padding: 3px; border-radius: 3px; }
+        .box-total { background: #2c3e50; }
+
+        .search-box { margin: 10px 0 10px 0; }
+        .search-box input { width: 100%; padding: 10px; border: 1px solid #34495e; border-radius: 5px; font-size: 14px; background: #fdfefe; }
+
+        table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 14px; }
+        th { background-color: #2c3e50; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        .action-btn { padding: 5px 10px; border-radius: 3px; cursor: pointer; border: none; color: white; font-size: 13px; margin-left: 3px; }
+        .edit-btn { background: #2980b9; }
+        .edit-btn:hover { background: #2471a3; }
+        .delete-btn { background: #e74c3c; }
+        .delete-btn:hover { background: #c0392b; }
+        
+        .tabs { display: flex; border-bottom: 1px solid #ddd; }
+        .tab { padding: 10px 20px; cursor: pointer; background: #eee; border: none; font-weight: bold; font-size: 14px; }
+        .tab.active { background: #2c3e50; color: white; }
+    </style>
+</head>
+<body>
+
+<!-- پەنجەرا چوونە ژوور (Login Screen) -->
+<div id="loginOverlay">
+    <div class="login-box">
+        <h2>چوونە ژوورا سیستەمی</h2>
+        <div class="form-group">
+            <label>ناڤێ بکارهێنەری (Username):</label>
+            <input type="text" id="loginUser" placeholder="ناڤ بنڤیسە">
+        </div>
+        <div class="form-group">
+            <label>کۆد (Password):</label>
+            <input type="password" id="loginPass" placeholder="کۆدی بنڤیسە">
+        </div>
+        <button onclick="checkLogin()">چوونە ژوور</button>
+        <div class="login-error" id="loginError">ناڤ یان کۆد شاشە!</div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="company-header">
+        <div>
+            <h1>Al Raab Factory</h1>
+            <p>سیستەمێ برێڤەبرنا بەرھەم و فرۆتنا بەرھەمان</p>
+        </div>
+        <div class="header-btns">
+            <button class="admin-settings-btn" onclick="openAdminModal()">دەستکارییا ئەدمنی</button>
+            <button class="logout-btn" onclick="logout()">دەرکەوتن</button>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>دیرۆک (بەروار):</label>
+        <input type="date" id="dateInput">
+    </div>
+
+    <div style="display: flex; gap: 20px;">
+        <!-- پشکا تۆمارکرنا بەرھەمی -->
+        <div class="section-box" style="flex: 1;">
+            <h3 id="formTitle">
+                تۆمارکرنا بەرھەمی (زیادبوون)
+                <button class="cat-btn" onclick="openCatModal()">دەستکارییا گروپان</button>
+            </h3>
+            
+            <div class="form-group">
+                <label>گروپ / مارکە:</label>
+                <select id="prodGroup"></select>
+            </div>
+
+            <div class="form-group">
+                <label>جۆرێ بەرھەمی / ناڤێ دەستی:</label>
+                <input type="text" id="prodItem" placeholder="بۆ نموونە: پاکێتا نایلۆنی">
+            </div>
+            <div class="form-group">
+                <label>ژمارە:</label>
+                <input type="number" id="prodQty" placeholder="کوژمێ بەرھەمی">
+            </div>
+            <button class="prod-btn" id="saveProdBtn" onclick="addRecord('production')">تۆمارکرنا بەرھەمی</button>
+        </div>
+
+        <!-- پشکا تۆمارکرنا فرۆتنێ -->
+        <div class="section-box" style="flex: 1;">
+            <h3>تۆمارکرنا فرۆتنێ (کێمبوون)</h3>
+            
+            <div class="form-group">
+                <label>گروپ / مارکە:</label>
+                <select id="saleGroup"></select>
+            </div>
+
+            <div class="form-group">
+                <label>جۆرێ بەرھەمی:</label>
+                <select id="saleItem"></select>
+            </div>
+            <div class="form-group">
+                <label>ژمارە:</label>
+                <input type="number" id="saleQty" placeholder="کوژمێ فرۆتی">
+            </div>
+            <button class="sale-btn" onclick="addRecord('sale')">تۆمارکرنا فرۆتنێ</button>
+        </div>
+    </div>
+
+    <!-- گشتى / ئەنجام و ژمارەیێن سهمان -->
+    <div class="stats-grid" id="statsGridContainer"></div>
+
+    <!-- پشکا گرافیکێ -->
+    <div class="chart-container">
+        <canvas id="productionChart"></canvas>
+    </div>
+
+    <!-- خشتەیێن داتایان و لێکۆلین (گەڕان) و دوگمەیا چاپکرنێ -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <div class="tabs" style="border: none;">
+            <button class="tab active" onclick="switchTab('prod', this)">لیستا بەرھەمان</button>
+            <button class="tab" onclick="switchTab('sale', this)">لیستا فرۆتنێ</button>
+        </div>
+        <button onclick="printCurrentTable()" style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold;">چاپکرنا لێستا نها (Print)</button>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="لێکۆلین: گروپ، ناڤێ بەرھەمی یان بەرواری بنڤیسە..." oninput="renderData()">
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>بەروار</th>
+                <th>گروپ / مارکە</th>
+                <th>جۆرێ بەرھەمی</th>
+                <th>ژمارە</th>
+                <th>چالاکی</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+<!-- پەنجەرا دەستکاریکرنا گروپان (Modal) -->
+<div class="modal" id="catModal">
+    <div class="modal-content">
+        <h3>برێڤەبرنا گروپان (مارکە)</h3>
+        <div class="form-group">
+            <label>ناڤێ گروپا نوو:</label>
+            <input type="text" id="newCatInput" placeholder="بۆ نموونە: مارکەکا نوو">
+        </div>
+        <button class="prod-btn" onclick="addNewCategory()" style="margin-bottom: 15px;">زێدەکرنا گروپا نوو</button>
+        
+        <div id="catListContainer" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 5px; border-radius: 4px; margin-bottom: 15px;"></div>
+
+        <button class="delete-btn" onclick="closeCatModal()" style="width: 100%; padding: 8px; border-radius: 5px;">گرتن</button>
+    </div>
+</div>
+
+<!-- پەنجەرا دەستکاریکرنا ئەدمنی (Modal) -->
+<div class="modal" id="adminModal">
+    <div class="modal-content">
+        <h3>گوهۆڕینا ناڤێ ئەدمنی و پاسوۆردی</h3>
+        <div class="form-group">
+            <label>ناڤێ نوو یێ بکارهێنەری:</label>
+            <input type="text" id="newAdminUser" placeholder="ناڤێ نوو">
+        </div>
+        <div class="form-group">
+            <label>کۆدێ (Password) نوو:</label>
+            <input type="password" id="newAdminPass" placeholder="کۆدێ نوو">
+        </div>
+        <button class="prod-btn" onclick="updateAdminCredentials()" style="margin-bottom: 10px;">پاشەکەفتکرنا گوهۆڕینان</button>
+        <button class="delete-btn" onclick="closeAdminModal()" style="width: 100%; padding: 8px; border-radius: 5px;">گرتن</button>
+    </div>
+</div>
+
+<script>
+    if (!localStorage.getItem('al_raab_admin_user')) {
+        localStorage.setItem('al_raab_admin_user', 'admin');
+        localStorage.setItem('al_raab_admin_pass', '1234');
+    }
+
+    function checkLogin() {
+        let u = document.getElementById('loginUser').value.trim();
+        let p = document.getElementById('loginPass').value.trim();
+        let err = document.getElementById('loginError');
+
+        let savedUser = localStorage.getItem('al_raab_admin_user');
+        let savedPass = localStorage.getItem('al_raab_admin_pass');
+
+        if (u === savedUser && p === savedPass) {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            document.getElementById('loginOverlay').style.display = 'none';
+        } else {
+            err.style.display = 'block';
+        }
+    }
+
+    function logout() {
+        sessionStorage.removeItem('isLoggedIn');
+        location.reload();
+    }
+
+    function openAdminModal() {
+        document.getElementById('newAdminUser').value = localStorage.getItem('al_raab_admin_user');
+        document.getElementById('newAdminPass').value = localStorage.getItem('al_raab_admin_pass');
+        document.getElementById('adminModal').style.display = 'flex';
+    }
+
+    function closeAdminModal() {
+        document.getElementById('adminModal').style.display = 'none';
+    }
+
+    function updateAdminCredentials() {
+        let u = document.getElementById('newAdminUser').value.trim();
+        let p = document.getElementById('newAdminPass').value.trim();
+
+        if (!u || !p) {
+            alert("هیڤییە ناڤ و پاسوۆردێ دروست پڕ بکە!");
+            return;
+        }
+
+        localStorage.setItem('al_raab_admin_user', u);
+        localStorage.setItem('al_raab_admin_pass', p);
+        alert("زانیارییێن ئەدمنی ب سەرکەفتیانە هاتنە گوهۆڕین!");
+        closeAdminModal();
+    }
+
+    window.onload = function() {
+        if (sessionStorage.getItem('isLoggedIn') === 'true') {
+            document.getElementById('loginOverlay').style.display = 'none';
+        }
+    };
+
+    document.getElementById('dateInput').valueAsDate = new Date();
+
+    let productions = JSON.parse(localStorage.getItem('al_raab_productions')) || [];
+    let sales = JSON.parse(localStorage.getItem('al_raab_sales')) || [];
+    let categories = JSON.parse(localStorage.getItem('al_raab_categories')) || ['Like', 'Saz', 'Sooz', 'Al-Mada', 'Nazeef', 'Aisan'];
+    
+    let currentTab = 'prod';
+    let myChart = null;
+    let editingIndex = -1;
+
+    function switchTab(tab, element) {
+        currentTab = tab;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        element.classList.add('active');
+        document.getElementById('searchInput').value = '';
+        renderData();
+    }
+
+    function updateCategoryDropdowns() {
+        let prodGroupSelect = document.getElementById('prodGroup');
+        let saleGroupSelect = document.getElementById('saleGroup');
+        
+        let pSelected = prodGroupSelect.value;
+        let sSelected = saleGroupSelect.value;
+
+        prodGroupSelect.innerHTML = '';
+        saleGroupSelect.innerHTML = '';
+
+        categories.forEach(cat => {
+            let opt1 = document.createElement('option');
+            opt1.value = cat;
+            opt1.textContent = cat;
+            prodGroupSelect.appendChild(opt1);
+
+            let opt2 = document.createElement('option');
+            opt2.value = cat;
+            opt2.textContent = cat;
+            saleGroupSelect.appendChild(opt2);
+        });
+
+        if (categories.includes(pSelected)) prodGroupSelect.value = pSelected;
+        if (categories.includes(sSelected)) saleGroupSelect.value = sSelected;
+
+        updateSaleDropdown();
+    }
+
+    function updateSaleDropdown() {
+        let saleGroup = document.getElementById('saleGroup').value;
+        let saleSelect = document.getElementById('saleItem');
+        let currentSelected = saleSelect.value;
+        
+        let filteredItems = productions.filter(p => p.group === saleGroup).map(p => p.item);
+        let uniqueItems = [...new Set(filteredItems)];
+
+        saleSelect.innerHTML = '';
+
+        if (uniqueItems.length === 0) {
+            saleSelect.innerHTML = '<option value="">چ بەرھەم بۆ ڤی گروپی ل کوگەهێ نینن</option>';
+            return;
+        }
+
+        uniqueItems.forEach(item => {
+            let opt = document.createElement('option');
+            opt.value = item;
+            opt.textContent = item;
+            saleSelect.appendChild(opt);
+        });
+
+        if (uniqueItems.includes(currentSelected)) {
+            saleSelect.value = currentSelected;
+        }
+    }
+
+    document.getElementById('saleGroup').addEventListener('change', updateSaleDropdown);
+
+    function renderData() {
+        let tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+
+        let activeData = (currentTab === 'prod') ? productions : sales;
+        let searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+
+        let filteredData = activeData.map((item, originalIndex) => {
+            return { ...item, originalIndex };
+        }).filter(item => {
+            let groupName = item.group ? item.group.toLowerCase() : '';
+            return groupName.includes(searchQuery) || item.item.toLowerCase().includes(searchQuery) || item.date.includes(searchQuery);
+        });
+
+        filteredData.forEach((item) => {
+            let actionsHtml = '';
+            if (currentTab === 'prod') {
+                actionsHtml = `
+                    <button class="action-btn edit-btn" onclick="editProduction(${item.originalIndex})">دەستکاری</button>
+                    <button class="action-btn delete-btn" onclick="deleteItem('production', ${item.originalIndex})">ژێبرن</button>
+                `;
+            } else {
+                actionsHtml = `
+                    <button class="action-btn delete-btn" onclick="deleteItem('sale', ${item.originalIndex})">ژێبرن</button>
+                `;
+            }
+
+            let row = `<tr>
+                <td>${item.date}</td>
+                <td><b>${item.group || categories[0]}</b></td>
+                <td>${item.item}</td>
+                <td>${item.qty}</td>
+                <td>${actionsHtml}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+
+        updateCategoryDropdowns();
+        calculateTotals();
+        updateChart();
+    }
+
+    function calculateTotals() {
+        let container = document.getElementById('statsGridContainer');
+        container.innerHTML = '';
+
+        let totalProdAll = 0;
+        let totalSaleAll = 0;
+        let totalNetAll = 0;
+
+        categories.forEach(cat => {
+            let pSum = productions.filter(p => p.group === cat).reduce((sum, p) => sum + p.qty, 0);
+            let sSum = sales.filter(s => s.group === cat).reduce((sum, s) => sum + s.qty, 0);
+            let net = pSum - sSum;
+
+            let uniqueItemsCount = [...new Set(productions.filter(p => p.group === cat).map(p => p.item))].length;
+            
+            let extraInfo = `<div class="sub-items-count">ژمارا ناڤێن سەر: <b>${uniqueItemsCount}</b></div>`;
+
+            totalProdAll += pSum;
+            totalSaleAll += sSum;
+            totalNetAll += net;
+
+            container.innerHTML += `
+                <div class="stat-box">
+                    گروپێ ${cat}: 
+                    <span>${net}</span>
+                    ${extraInfo}
+                </div>
+            `;
+        });
+
+        container.innerHTML += `
+            <div class="stat-box box-total">
+                گشتیێ بەرھەمان: 
+                <span>${totalProdAll}</span>
+            </div>
+            <div class="stat-box box-total" style="background: #d35400;">
+                گشتیێ فرۆتنێ: 
+                <span>${totalSaleAll}</span>
+            </div>
+            <div class="stat-box box-total" style="background: #16a085;">
+                گشتیێ کوگەهێ (Net): 
+                <span>${totalNetAll}</span>
+            </div>
+        `;
+    }
+
+    function addRecord(type) {
+        let date = document.getElementById('dateInput').value;
+        let groupInputId = (type === 'production') ? 'prodGroup' : 'saleGroup';
+        let itemInputId = (type === 'production') ? 'prodItem' : 'saleItem';
+        let qtyInputId = (type === 'production') ? 'prodQty' : 'saleQty';
+
+        let group = document.getElementById(groupInputId).value;
+        let item = document.getElementById(itemInputId).value.trim();
+        let qty = Number(document.getElementById(qtyInputId).value);
+
+        if (!date || !item || !qty || qty <= 0) {
+            alert("هیڤییە بەروار، ناڤێ بەرھەمی و ژمارەکا دروست پڕ بکە!");
+            return;
+        }
+
+        if (type === 'production') {
+            // پشکنین بۆ ناڤێ دووبارە د هەمان گروپ دا
+            let isDuplicate = productions.some((p, index) => 
+                p.group === group && 
+                p.item.toLowerCase() === item.toLowerCase() && 
+                index !== editingIndex
+            );
+
+            if (isDuplicate) {
+                alert(`ئەڤ بەرھەمە (${item}) بەری نوکە د گروپێ (${group}) دا هەیە! ناتوانی دووبارە ناڤەکێ وەکی ئێک داخل بکەی، ئەگەر دڤێت ژمارێ زیاد بکەی دەستکارییا وێ بکە.`);
+                return;
+            }
+
+            if (editingIndex === -1) {
+                productions.push({ date, group, item, qty: qty });
+            } else {
+                productions[editingIndex] = { date, group, item, qty: qty };
+                editingIndex = -1;
+                document.getElementById('formTitle').innerHTML = `تۆمارکرنا بەرھەمی (زیادبوون) <button class="cat-btn" onclick="openCatModal()">دەستکارییا گروپان</button>`;
+                document.getElementById('saveProdBtn').innerText = "تۆمارکرنا بەرھەمی";
+            }
+            localStorage.setItem('al_raab_productions', JSON.stringify(productions));
+            document.getElementById('prodItem').value = '';
+            document.getElementById('prodQty').value = '';
+        } else {
+            let totalProducedOfThis = productions.filter(p => p.group === group && p.item === item).reduce((sum, p) => sum + p.qty, 0);
+            let totalSoldOfThis = sales.filter(s => s.group === group && s.item === item).reduce((sum, s) => sum + s.qty, 0);
+            let availableStock = totalProducedOfThis - totalSoldOfThis;
+
+            if (qty > availableStock) {
+                alert(`ناتوانی ڤی برەی بفرۆشی! ژمارا موجودەیا ڤی بەرھەمی د گروپا (${group}) تنێ (${availableStock}) دانە نە د کوگەهێ دایە.`);
+                return;
+            }
+
+            let remainingToSubtract = qty;
+            for (let i = 0; i < productions.length; i++) {
+                if (productions[i].group === group && productions[i].item === item && productions[i].qty > 0) {
+                    if (productions[i].qty >= remainingToSubtract) {
+                        productions[i].qty -= remainingToSubtract;
+                        remainingToSubtract = 0;
+                    } else {
+                        remainingToSubtract -= productions[i].qty;
+                        productions[i].qty = 0;
+                    }
+                }
+                if (remainingToSubtract === 0) break;
+            }
+
+            sales.push({ date, group, item, qty: qty });
+            localStorage.setItem('al_raab_productions', JSON.stringify(productions));
+            localStorage.setItem('al_raab_sales', JSON.stringify(sales));
+            document.getElementById('saleQty').value = '';
+        }
+
+        renderData();
+    }
+
+    function editProduction(index) {
+        let itemToEdit = productions[index];
+        document.getElementById('dateInput').value = itemToEdit.date;
+        document.getElementById('prodGroup').value = itemToEdit.group || categories[0];
+        document.getElementById('prodItem').value = itemToEdit.item;
+        document.getElementById('prodQty').value = itemToEdit.qty;
+
+        editingIndex = index;
+        document.getElementById('formTitle').innerHTML = `دەستکاریکرنا بەرھەمی <button class="cat-btn" onclick="openCatModal()">دەستکارییا گروپان</button>`;
+        document.getElementById('saveProdBtn').innerText = "نووکرنا (Update) بەرھەمی";
+        
+        switchTab('prod', document.querySelector('.tab'));
+    }
+
+    function deleteItem(type, index) {
+        if (type === 'production') {
+            productions.splice(index, 1);
+            localStorage.setItem('al_raab_productions', JSON.stringify(productions));
+        } else {
+            sales.splice(index, 1);
+            localStorage.setItem('al_raab_sales', JSON.stringify(sales));
+        }
+        renderData();
+    }
+
+    function openCatModal() {
+        document.getElementById('catModal').style.display = 'flex';
+        renderCategoryList();
+    }
+
+    function closeCatModal() {
+        document.getElementById('catModal').style.display = 'none';
+        updateCategoryDropdowns();
+    }
+
+    function renderCategoryList() {
+        let container = document.getElementById('catListContainer');
+        container.innerHTML = '';
+        categories.forEach((cat, index) => {
+            container.innerHTML += `
+                <div class="cat-list-item">
+                    <span>${cat}</span>
+                    <button class="delete-btn" style="padding: 2px 6px; font-size: 11px;" onclick="deleteCategory(${index})">ژێبرن</button>
+                </div>
+            `;
+        });
+    }
+
+    function addNewCategory() {
+        let newCat = document.getElementById('newCatInput').value.trim();
+        if (!newCat) {
+            alert("هیڤییە ناڤەکێ دروست بۆ گروپ بنڤیسە!");
+            return;
+        }
+        if (categories.includes(newCat)) {
+            alert("ئەڤ گروپە بەری نوکە هەیە!");
+            return;
+        }
+        categories.push(newCat);
+        localStorage.setItem('al_raab_categories', JSON.stringify(categories));
+        document.getElementById('newCatInput').value = '';
+        renderCategoryList();
+        updateCategoryDropdowns();
+        renderData();
+    }
+
+    function deleteCategory(index) {
+        if (categories.length <= 1) {
+            alert("نەچارە کێمترین ئێک گروپ باید مینت!");
+            return;
+        }
+        categories.splice(index, 1);
+        localStorage.setItem('al_raab_categories', JSON.stringify(categories));
+        renderCategoryList();
+        updateCategoryDropdowns();
+        renderData();
+    }
+
+    function updateChart() {
+        let prodSummary = categories.map(g => productions.filter(p => p.group === g).reduce((sum, p) => sum + p.qty, 0));
+        let saleSummary = categories.map(g => sales.filter(s => s.group === g).reduce((sum, s) => sum + s.qty, 0));
+
+        let ctx = document.getElementById('productionChart').getContext('2d');
+        
+        if (myChart) {
+            myChart.destroy();
+        }
+
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: categories,
+                datasets: [
+                    {
+                        label: 'بەرھەم (مایە د کوگەهێ دا)',
+                        data: prodSummary,
+                        backgroundColor: 'rgba(39, 174, 96, 0.7)',
+                        borderColor: 'rgba(39, 174, 96, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'فرۆتن',
+                        data: saleSummary,
+                        backgroundColor: 'rgba(230, 126, 34, 0.7)',
+                        borderColor: 'rgba(230, 126, 34, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    function printCurrentTable() {
+        let activeTitle = (currentTab === 'prod') ? 'لیستا بەرھەمێن کۆگەهێ (Al Raab Factory)' : 'لیستا فرۆتنا بەرھەمان (Al Raab Factory)';
+        let tableHTML = document.querySelector('table').outerHTML;
+
+        let printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write('<html lang="ku" dir="rtl"><head><title>' + activeTitle + '</title>');
+        printWindow.document.write('<style>');
+        printWindow.document.write('body { font-family: Tahoma, sans-serif; padding: 20px; direction: rtl; }');
+        printWindow.document.write('h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }');
+        printWindow.document.write('table { width: 100%; border-collapse: collapse; margin-top: 10px; }');
+        printWindow.document.write('th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 13px; }');
+        printWindow.document.write('th { background-color: #2c3e50; color: white; }');
+        printWindow.document.write('tr:nth-child(even) { background-color: #f9f9f9; }');
+        printWindow.document.write('</style></head><body>');
+        printWindow.document.write('<h2>' + activeTitle + '</h2>');
+        printWindow.document.write(tableHTML);
+        printWindow.document.write('</body></html>');
+        
+        printWindow.document.close();
+        printWindow.focus();
+        
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+    }
+
+    renderData();
+</script>
+
+</body>
+</html>
